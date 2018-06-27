@@ -1,7 +1,7 @@
 <template>
   <div class="blocks">
 
-    <div v-if="block">
+    <div v-if="block_loaded">
 
       <block-info :block="this.block"></block-info>
 
@@ -36,7 +36,8 @@ export default {
 
   data () {
     return {
-      block: []
+      block: [],
+      block_loaded: false
     }
   },
   beforeRouteUpdate (to) {
@@ -50,8 +51,23 @@ export default {
       if (!block_id) {
         block_id = this.$route.params.block_id
       }
-      const response = await BlocksService.fetchBlock(block_id)
-      this.block = response.data
+      this.block_loaded = false
+      try {
+        let response = await BlocksService.fetchBlock(block_id)
+        if (response.data.trxs) {
+          let trxs_parsed = []
+          response.data.trxs.forEach(function(trx) {
+            trx.from.addresses = trx.from.addresses.sort((a,b) => Number(b.amount) - Number(a.amount))
+            trx.to.addresses = trx.to.addresses.sort((a,b) => Number(b.amount) - Number(a.amount))
+            trxs_parsed.push(trx)
+          })
+          response.data.trxs = trxs_parsed
+        }
+        this.block = response.data
+      } catch (exception) {
+        this.block =  { block_id: parseInt(block_id) }
+      }
+      this.block_loaded = true
     },
 
   }
@@ -81,6 +97,11 @@ export default {
     box-sizing: border-box;
     padding: 10px 0;
     display: block;
+  }
+
+  .transactionsWrapper table span:first-child {
+     font-weight: normal;
+     text-shadow: none;
   }
 
 </style>

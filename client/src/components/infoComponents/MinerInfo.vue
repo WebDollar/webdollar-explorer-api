@@ -14,40 +14,40 @@
           </span>
       </div>
 
-      <div v-if=" miner.balance !== 0" >
+      <div>
           <span >
             Current balance
           </span>
         <span>
-            {{ this.formatMoneyNumber(miner.balance*10000,2) }} <span title='Percentage of the Total Supply'>[{{ this.miner.total_supply_ratio }}%]</span>
+            {{ this.formatMoneyNumber(miner.balance*10000,4) }} <span title='Percentage of the Total Supply'>[{{ this.miner.total_supply_ratio }}%]</span>
           </span>
       </div>
 
-      <div v-if="miner.miner_balance !== 0">
+      <div>
           <span>
             Total Mined amount
           </span>
         <span>
             <!--TODO add fee to mined amount-->
-            {{ this.formatMoneyNumber(miner.miner_balance*10000,2) }}
+            {{ this.formatMoneyNumber(miner.miner_balance*10000,4) }}
           </span>
       </div>
 
-      <div v-if="miner.trx_to_balance !== 0" >
+      <div>
           <span>
             Transactions sent amount
           </span>
         <span>
-            {{ this.formatMoneyNumber(miner.trx_to_balance*10000,2) }}
+            {{ this.formatMoneyNumber(miner.trx_to_balance*10000,4) }}
           </span>
       </div>
 
-      <div v-if="miner.trx_from_balance !== 0">
+      <div>
           <span>
             Transactions received amount
           </span>
         <span>
-            {{ this.formatMoneyNumber(miner.trx_from_balance*10000,2) }}
+            {{ this.formatMoneyNumber(miner.trx_from_balance*10000,4) }}
           </span>
       </div>
 
@@ -93,7 +93,10 @@ export default {
 
   methods: {
 
-    formatMoneyNumber(number, decimals){
+    formatMoneyNumber(number, decimals) {
+      if (number < 0 || !number) {
+        return 0
+      }
       return Utils.formatMoneyNumber(number, decimals);
     }
   }
