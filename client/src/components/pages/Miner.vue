@@ -9,7 +9,7 @@
 
         <div class="tabWrapper">
           <button id="button_trx" class="w3-bar-item w3-button" v-on:click="openTab('transactions')">Transactions</button>
-          <button id="button_block" class="w3-bar-item w3-button" style="background-color: #a4c0ab" v-on:click="openTab('blocks')">Mined Blocks</button>
+          <button id="button_block" class="w3-bar-item w3-button" style="background-color: #ffebba" v-on:click="openTab('blocks')">Mined Blocks</button>
         </div>
 
         <div class="address_tab" id="transactions">
@@ -120,13 +120,13 @@ export default {
       if (name=='blocks') {
         document.getElementById('blocks').style.display = "block"
         document.getElementById('transactions').style.display = "none"
-        document.getElementById('button_block').style.backgroundColor = "#00c02c"
-        document.getElementById('button_trx').style.backgroundColor = "#a4c0ab"
+        document.getElementById('button_block').style.backgroundColor = "#fec02c"
+        document.getElementById('button_trx').style.backgroundColor = "#ffebba"
       } else {
         document.getElementById('blocks').style.display = "none"
         document.getElementById('transactions').style.display = "block"
-        document.getElementById('button_trx').style.backgroundColor = "#00c02c"
-        document.getElementById('button_block').style.backgroundColor = "#a4c0ab"
+        document.getElementById('button_trx').style.backgroundColor = "#fec02c"
+        document.getElementById('button_block').style.backgroundColor = "#ffebba"
       }
     }
   }
@@ -147,7 +147,7 @@ export default {
 }
 
 .minedBlocksList{
-  width: 450px!important;
+  width: 1100px!important;
 }
 
 .spinner {
@@ -189,24 +189,24 @@ export default {
     overflow: hidden;
     text-decoration: none;
     color: inherit;
-    background-color: #00c02c;
+    background-color: #fec02c;
+    color: #000;
     text-align: center;
     cursor: pointer;
 }
 
+.w3-btn:focus, .w3-button{
+    outline: none;
+}
+
 .tabWrapper {
     text-align: left;
-    width: 670px;
+    width: 1100px;
     padding: 0 0 10px 0;
     margin: 0 auto;
     margin-top:40px;
     border-radius: 15px;
     overflow: hidden;
-}
-
-.transactionsWrapper table span:first-child {
-  font-weight: bold;
-  text-shadow: 0 0 3px #0804f3;
 }
 
 </style>
