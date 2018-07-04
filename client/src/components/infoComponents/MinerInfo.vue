@@ -10,7 +10,16 @@
             Address
           </span>
         <span>
-            <a :href="'#/miner/' + miner.address">{{ miner.address }}</a>
+            <a class="webdAddress" :href="'#/miner/' + miner.address">{{ miner.address }}</a>
+          </span>
+      </div>
+
+      <div v-if="getLabel(miner.address)">
+          <span>
+            Label
+          </span>
+        <span>
+            <a class="webdAddress" :href="'#/miner/' + miner.address">{{ getLabel(miner.address) }}</a>
           </span>
       </div>
 
@@ -27,10 +36,10 @@
           <span>
             Total Mined amount
           </span>
-        <span>
-            <!--TODO add fee to mined amount-->
-            {{ this.formatMoneyNumber(miner.miner_balance*10000,4) }}
-          </span>
+        <span v-if="miner.blocks && miner.blocks.length">
+          {{ this.formatMoneyNumber(miner.miner_balance*10000,4) }}
+        </span>
+        <span v-else> 0 </span>
       </div>
 
       <div>
@@ -51,22 +60,24 @@
           </span>
       </div>
 
-      <div v-if="miner.blocks && miner.blocks.length" >
+      <div>
           <span>
             Blocks mined
           </span>
-        <span>
+          <span v-if="miner.blocks && miner.blocks.length">
             {{ miner.blocks.length }}
           </span>
+          <span v-else> 0 </span>
       </div>
 
-      <div v-if="miner.transactions && miner.transactions.length" >
+      <div>
           <span>
             Transactions
           </span>
-        <span>
+          <span v-if="miner.transactions && miner.transactions.length">
             {{ miner.transactions.length }}
           </span>
+          <span v-else> 0 </span>
       </div>
 
     </div>
@@ -92,7 +103,13 @@ export default {
   },
 
   methods: {
-
+    getLabel(address) {
+      let label = Utils.mapAddress(address)
+      if (label != address) {
+        return label
+      }
+      return
+    },
     formatMoneyNumber(number, decimals) {
       if (number < 0 || !number) {
         return 0
