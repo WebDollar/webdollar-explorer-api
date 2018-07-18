@@ -18,7 +18,35 @@ export default {
      {
        name: 'CHUCK_POOL_1',
        address: 'WEBD$gAN3MXFnwhwoZyoCzLy+z@pArrYdsDb8iv$',
+       'status': 'down',
+       fee: 2,
+       min_amount: 10
+     },
+     {
+       name: 'WMP_1',
+       address: 'WEBD$gCrEhDsa9Wv$@x3QkNd4jbNcb5bISk8Nyv$',
+       'status': 'down',
+       fee: 2,
+       min_amount: 10
+     },
+     {
+       name: 'WBD_WIN',
+       address: 'WEBD$gD$XiN5r1uVU#QgZRhM@en8dR1xLB@BEtf$',
        'status': 'up',
+       fee: 1,
+       min_amount: 10
+     },
+     {
+       name: 'BACMpool',
+       address: 'WEBD$gCsh0nNrsZv9VYQfe5Jn$9YMnD4hdyx62n$',
+       'status': 'up',
+       fee: 1,
+       min_amount: 10
+     },
+     {
+       name: 'WMP_2',
+       address: 'WEBD$gAPa@tBU41xAyP6WuFVB79PLGqZHIh48K7$',
+       'status': 'down',
        fee: 2,
        min_amount: 10
      },
@@ -27,6 +55,18 @@ export default {
   fame: {
         total_donations: 0,
         donors: [
+          {
+            address: 'WEBD$gBC8XecMz1Zh2K$reiEFTwp9gLeGH@eR$n$',
+            amount: 7000,
+            label: 'Webdollar Infinity Pool',
+            block_id: 158710
+          },
+          {
+            address: 'WEBD$gDb92@ZBea7A6jao$ypYk8tcWLJa2Edi#b$',
+            amount: 10,
+            label: 'unknown',
+            block_id: 142974
+          },
           {
             address: 'WEBD$gD5dvw68wBDv@oT9FMUs1aW0Fb@aJPkc0P$',
             amount: 200000,
