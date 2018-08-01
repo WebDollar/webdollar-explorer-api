@@ -4,7 +4,7 @@
     <div v-if="is_loaded">
     </div>
     <loading v-else></loading>
-    <svg id="svg" width="1280" height="1024" :class="getDisplayClass()"></svg>
+    <svg id="svg" width="680" height="510" :class="getDisplayClass()"></svg>
   </div>
 
 </template>
@@ -51,9 +51,30 @@ export default {
     },
     async drawStars() {
 
+    const STEP_INCREASE = 120
+    const STEP_INCREASE_MAX = 1200
+
+    let width = 680
+    let height = width * 3 / 5
+
+    if (this.stars.nodes.length > STEP_INCREASE && this.stars.nodes.length < STEP_INCREASE_MAX) {
+      width = width * this.stars.nodes.length / STEP_INCREASE * 0.45 * 3 / 5
+      height = width * 3 / 5 * 1.3
+      width = width * 1.3
+    }
+
+    if (this.stars.nodes.length > STEP_INCREASE_MAX) {
+      let result = confirm("The network of this address has a very large number of connections (" + this.stars.nodes.length + "). Displaying all of them may render your browser unusable. Are you sure you want to continue?")
+      if (!result) { return; }
+      width = width * this.stars.nodes.length / STEP_INCREASE * 0.45 * 3 / 5
+      height = width * 3 / 5 / 2
+      width = width / 2
+    }
+
+    document.getElementById('svg').setAttribute("width", width + "px");
+    document.getElementById('svg').setAttribute("height", height + "px");
+
     var svg = d3.select("svg"),
-    width = +svg.attr("width"),
-    height = +svg.attr("height"),
     radius = 6;
 
     var color = d3.scaleOrdinal(d3.schemeCategory20);
