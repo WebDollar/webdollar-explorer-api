@@ -11,7 +11,7 @@ export default {
      {
        name: 'WEBD_POOL_2',
        address: 'WEBD$gCGdPQLohdeHQqa+ptoJ@QK2LCvN7IS5JX$',
-       'status': 'up',
+       'status': 'down',
        fee: 2,
        min_amount: 20
      },
@@ -23,14 +23,14 @@ export default {
        min_amount: 20
      },
      {
-       name: 'WMP_1',
+       name: 'WMP',
        address: 'WEBD$gCrEhDsa9Wv$@x3QkNd4jbNcb5bISk8Nyv$',
-       'status': 'down',
+       'status': 'up',
        fee: 2,
        min_amount: 20
      },
      {
-       name: 'WBD_WIN',
+       name: 'Roxana',
        address: 'WEBD$gD$XiN5r1uVU#QgZRhM@en8dR1xLB@BEtf$',
        'status': 'up',
        fee: 1,
@@ -44,17 +44,24 @@ export default {
        min_amount: 20
      },
      {
-       name: 'WMP_2',
-       address: 'WEBD$gAPa@tBU41xAyP6WuFVB79PLGqZHIh48K7$',
-       'status': 'down',
-       fee: 2,
+       name: 'InfinityPool',
+       address: 'WEBD$gBMQp$yXWiZjHUvkrR7u7uqM7g8wUn6TTj$',
+       'status': 'up',
+       fee: 1,
        min_amount: 20
      },
      {
-       name: 'InfinityPool',
+       name: 'InfinityPool-Old',
        address: 'WEBD$gAd7esyzrkepdYj#DNDSfJy02aqDCPm5Pj$',
-       'status': 'up',
+       'status': 'down',
        fee: 1,
+       min_amount: 20
+     },
+     {
+       name: 'CoffeePool',
+       address: 'WEBD$gCMxAKX96yhmaygo@NG+vnb4cz1eYoYpMv$',
+       'status': 'up',
+       fee: 2,
        min_amount: 20
      }
   ],
