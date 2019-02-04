@@ -10,7 +10,7 @@
         <div class="tabWrapper">
           <button id="button_trx" class="w3-bar-item w3-button" v-on:click="openTab('transactions')">Transactions <br> ({{ getTrxNumber(miner.transactions_number, miner.transactions.length)}})</button>
           <button id="button_block" class="w3-bar-item w3-button" style="background-color: #a4c0ab" v-on:click="openTab('blocks')">Mined Blocks <br> ({{ getTrxNumber(miner.blocks_number, miner.blocks.length)}})</button>
-          <toggle-button v-if="miner.transactions_number > miner.transactions.length || miner.blocks_number > miner.blocks.length" :value="true" :height=45 :width=155 v-model="showLatestTransactions"
+          <toggle-button v-if="false && (miner.transactions_number > miner.transactions.length || miner.blocks_number > miner.blocks.length)" :value="true" :height=45 :width=155 v-model="showLatestTransactions"
                @change="onShowLatestTrnsactions"
                :labels="{checked: 'Show All', unchecked: 'Show Latest'}"/>
         </div>
@@ -89,31 +89,33 @@ export default {
           var index_from = -1
           var index_to = -1
 
-          trx.transaction.from.addresses = trx.transaction.from.addresses.sort( function(a,b) {
-            return (Number(b.amount) - Number(a.amount))
+          trx.from.trxs = trx.from.trxs.sort( function(a,b) {
+            return (Number(b.trx_from_amount) - Number(a.trx_from_amount))
           })
-          trx.transaction.from.addresses.forEach(function(trx, index) {
-            if (trx.address == miner_address) {
+          trx.from.trxs.forEach(function(trx, index) {
+            if (trx.trx_from_address == miner_address) {
               index_from = index
+              return
             }
           })
 
           if (index_from != -1) {
-            trx.transaction.from.addresses.unshift(trx.transaction.from.addresses[index_from])
-            trx.transaction.from.addresses.splice(index_from + 1, 1)
+            trx.from.trxs.unshift(trx.from.trxs[index_from])
+            trx.from.trxs.splice(index_from + 1, 1)
           }
 
-          trx.transaction.to.addresses = trx.transaction.to.addresses.sort(function (a,b) {
-            return (Number(b.amount) - Number(a.amount))
+          trx.to.trxs = trx.to.trxs.sort(function (a,b) {
+            return (Number(b.trx_to_amount) - Number(a.trx_to_amount))
           })
-          trx.transaction.to.addresses.forEach(function(trx, index) {
-            if (trx.address == miner_address) {
+          trx.to.trxs.forEach(function(trx, index) {
+            if (trx.trx_to_address == miner_address) {
               index_to = index
+              return
             }
           })
           if (index_to != -1) {
-            trx.transaction.to.addresses.unshift(trx.transaction.to.addresses[index_to])
-            trx.transaction.to.addresses.splice(index_to + 1, 1)
+            trx.to.trxs.unshift(trx.to.trxs[index_to])
+            trx.to.trxs.splice(index_to + 1, 1)
           }
 
           trxs_parsed.push(trx)

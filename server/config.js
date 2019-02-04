@@ -4,6 +4,7 @@ config.server = {};
 config.webdollar = {};
 config.couchdb = {};
 config.couchdb.syncer = {};
+config.mongodb = {};
 
 config.server.port = 3000
 
@@ -16,5 +17,11 @@ config.couchdb.syncer.db_name = 'syncer'
 config.couchdb.syncer.view_name = 'block'
 config.couchdb.syncer.view_doc_name = 'ordered_blocks'
 
+config.enable_mongodb = true
+config.mongodb.url = "mongodb://localhost:27017"
+config.mongodb.db = "blockchainDB3"
+config.mongodb.collection = "blocks"
+config.mongodb.trx_collection = "transactions"
+config.mongodb.mtrx_collection = "mtransactions"
 
 module.exports = config;

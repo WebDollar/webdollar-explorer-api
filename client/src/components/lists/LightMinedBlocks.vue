@@ -11,16 +11,16 @@
         <td>Txs</td>
       </tr>
 
-      <tr v-bind:key="block.block_id" v-for="block in blocks">
+      <tr v-bind:key="block.number" v-for="block in blocks">
 
         <td align="left">
-          <router-link v-if="showMiner" v-bind:to="{ name: 'Block', params: { block_id: block.id }}">{{ block.id}}</router-link>
-          <router-link v-else v-bind:to="{ name: 'Block', params: { block_id: block.block_id }}">{{ block.block_id}}</router-link>
+          <router-link v-if="showMiner" v-bind:to="{ name: 'Block', params: { block_id: block.number }}">{{ block.number}}</router-link>
+          <router-link v-else v-bind:to="{ name: 'Block', params: { block_id: block.number }}">{{ block.number}}</router-link>
         </td>
 
         <td v-if="showMiner" align="center">
-          <a :href="'#/miner/' + block.miner_address">
-            {{ mapAddress(block.miner_address) }}
+          <a :href="'#/miner/' + block.miner">
+            {{ mapAddress(block.miner) }}
           </a>
         </td>
 
@@ -29,11 +29,11 @@
         </td>
 
         <td align="left">
-          <a v-if="showMiner" :href="'#/miner/' + block.miner_address">
-            {{ block.trxs.length }}
+          <a v-if="showMiner" :href="'#/miner/' + block.miner">
+            {{ block.trxs_number}} {{ block.transactions }}
           </a>
           <span v-else>
-            {{ block.trxs }}
+            {{ block.trxs_number}} {{ block.transactions }}
           </span>
         </td>
 
@@ -69,11 +69,12 @@ export default {
       return Utils.formatMoneyNumber(number, decimals);
     },
     formatDate(timestamp, showMiner){
-      let fromNow = moment(timestamp).fromNow()
+      let blockDate = new Date(timestamp * 1000)
+      let fromNow = moment(blockDate).fromNow()
       if (showMiner) {
         return fromNow
       } else {
-        return fromNow + " (" + timestamp +  ")"
+        return fromNow + " (" + blockDate.toGMTString() +  ")"
       }
     }
   }

@@ -10,9 +10,10 @@ const REWARD = AMOUNT_DIVIDER * 6000
 const ADDRESS_CACHE_DB = "address"
 const BALANCE_RATIO_DECIMALS = 5
 const MAX_POOLED_TRXS = 15
-const MAX_BLOCKS = 300
+const MAX_BLOCKS = 25
 const MAX_DEPTH = 1
 
+const MAX_LATEST_BLOCKS = 14
 function getEmptyAddress(miner_address) {
   return {
     'address': miner_address,
@@ -20,6 +21,9 @@ function getEmptyAddress(miner_address) {
     'total_supply_ratio': 0,
     'last_block': 0,
     'miner_balance': 0,
+    'miner_balance_pow': 0,
+    'miner_balance_pos': 0,
+    'miner_balance_res': 0,
     'miner_fee_balance': 0,
     'miner_fee_to_balance': 0,
     'trx_to_balance': 0,
@@ -29,15 +33,42 @@ function getEmptyAddress(miner_address) {
   }
 }
 
-exports.list_all_blocks = function(req, res) {
+exports.latest_blocks_mongo = async function(req, res) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Cache-Control", "public, max-age=40")
+
+  let blocks = []
+  let MongoClient = require('mongodb').MongoClient;
+  try {
+    var mongoDB = await MongoClient.connect(config.mongodb.url, { useNewUrlParser: true })
+  } catch (ex) {
+    console.log(ex)
+    res.json()
+    return
+  }
+  try {
+    let blockChainDB = mongoDB.db(config.mongodb.db);
+
+    blocks = await blockChainDB.collection(config.mongodb.collection).find({}).sort( { number: -1 }).limit(MAX_LATEST_BLOCKS).toArray()
+    res.json(blocks)
+    return
+  } catch (ex) {
+    console.log(ex)
+    res.json()
+    return
+  } finally {
+    mongoDB.close()
+  }
+}
+
+exports.latest_blocks = function(req, res) {
   var blocks = [];
   var max_block_length;
-  var max_blocks = 14;
 
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Cache-Control", "public, max-age=10")
 
-  request.get(config.webdollar.pouchdb_sync_url + '/blocks/' + max_blocks, function (error, response, body) {
+  request.get(config.webdollar.pouchdb_sync_url + '/blocks/' + MAX_LATEST_BLOCKS, function (error, response, body) {
     if (error) {
       console.error(error)
       console.error(body)
@@ -45,11 +76,10 @@ exports.list_all_blocks = function(req, res) {
       try {
         var raw_blocks = JSON.parse(body).blocks
         raw_blocks.forEach(function(block) {
-          block.reward = block.reward / AMOUNT_DIVIDER
-          var date = new Date((block.raw_timestamp + 1524742312) * 1000)
-          block.timestamp = date.toUTCString()
-          block.reward = block.reward / AMOUNT_DIVIDER
-          block.miner_address = blockchainUtils.decodeMinerAddress(block.miner_address)
+          block.reward = block.reward
+          block.number = block.id
+          block.timestamp = parseInt(block.raw_timestamp) + 1524742312
+          block.miner = blockchainUtils.decodeMinerAddress(block.miner_address)
           blocks.push(block)
         })
       } catch(ex) {
@@ -64,12 +94,42 @@ exports.list_all_blocks = function(req, res) {
   });
 }
 
+exports.read_a_block_mongo = async function(req, res) {
+  res.header("Cache-Control", "public, max-age=40")
+  res.header("Access-Control-Allow-Origin", "*");
+
+  var blockNumber = parseInt(req.params.blockId);
+  var block = {}
+  try {
+    let MongoClient = require('mongodb').MongoClient;
+    let mongoDB = await MongoClient.connect(config.mongodb.url, { useNewUrlParser: true })
+    let blockChainDB = mongoDB.db(config.mongodb.db);
+
+    let block_db = await blockChainDB.collection(config.mongodb.collection).find({ number: blockNumber }).toArray()
+    if (block_db.length == 1) {
+      block = block_db[0]
+      let trxs = await blockChainDB.collection(config.mongodb.trx_collection).find({ block_number: blockNumber }).toArray()
+      block.trxs = trxs
+    } else {
+      console.log(block_db)
+    }
+    mongoDB.close()
+    res.json(block)
+    return
+  } catch (ex) {
+    console.log(ex)
+    res.json(block)
+    return
+  }
+  res.json(block)
+}
+
 exports.read_a_block = function(req, res) {
   var blockId = parseInt(req.params.blockId);
   var block = {}
 
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Cache-Control", "public, max-age=10")
+  res.header("Cache-Control", "public, max-age=40")
 
   request.get(config.webdollar.pouchdb_sync_url + '/block/' + blockId, function (error, response, body) {
     if (error) {
@@ -80,15 +140,15 @@ exports.read_a_block = function(req, res) {
         block = JSON.parse(body).block
         block.reward = block.reward / AMOUNT_DIVIDER
         block.miner_address = blockchainUtils.decodeMinerAddress(block.miner_address)
+        block.miner = blockchainUtils.decodeMinerAddress(block.miner_address)
         var date = new Date((block.raw_timestamp + 1524742312) * 1000)
         block.timestamp = date.toUTCString()
         var transactions_parsed = []
 
         block.trxs.forEach(function(transaction) {
           var transaction_parsed = transaction
-          transaction_parsed.block_id = block.id
-          transaction_parsed.id = block.id
-          transaction_parsed.timestamp = block.timestamp
+          transaction_parsed.block_number = block.id
+          transaction_parsed.timestamp = date.getTime() / 1000
           transaction_parsed.fee = 0
           var to_amount = 0
 
@@ -107,8 +167,6 @@ exports.read_a_block = function(req, res) {
           })
 
           transaction_parsed.fee = transaction_parsed.from.amount - to_amount
-          transaction_parsed.fee = transaction_parsed.fee / AMOUNT_DIVIDER
-          transaction_parsed.from.amount = transaction_parsed.from.amount / AMOUNT_DIVIDER
 
           transactions_parsed.push(transaction_parsed)
         })
@@ -125,7 +183,10 @@ exports.read_a_block = function(req, res) {
   });
 }
 
-exports.read_an_address = function (req, res) {
+exports.read_an_address_mongo = async function (req, res) {
+  res.header("Cache-Control", "public, max-age=40")
+  res.header("Access-Control-Allow-Origin", "*");
+
   var miner_address = req.params.address
   var show_all_transactions = false
   if (req.query.show_all_transactions) {
@@ -136,8 +197,169 @@ exports.read_an_address = function (req, res) {
   }
   var miner = getEmptyAddress(miner_address)
 
-  res.header("Cache-Control", "public, max-age=100")
+  if (miner_address.length != 40) {
+    console.log("Address " + miner_address + " is not 40 char long")
+    res.json(miner);
+    return
+  }
+  console.log("getting miner " + miner_address)
+  miner.balance = 0
+  miner.miner_balance = 0
+  miner.trx_to_balance = 0
+  miner.trx_from_balance = 0
+  miner.blocks = []
+  miner.transactions = []
+  miner.pooled_trxs = []
+  miner.transactions_number = 0
+  miner.blocks_number = 0
+  try {
+    let MongoClient = require('mongodb').MongoClient;
+    let mongoDB = await MongoClient.connect(config.mongodb.url, { useNewUrlParser: true })
+    let blockChainDB = mongoDB.db(config.mongodb.db);
+    let miner_balance = await blockChainDB.collection(config.mongodb.collection).aggregate([
+      { $match: {
+           miner: miner.address,
+           reward: { $gt: 0 }
+        }
+      },
+      { $group: {
+          _id: 1,
+          balance: {
+             $sum: "$reward"
+          }
+        }
+      }
+    ]).toArray()
+    let miner_balance_pos = await blockChainDB.collection(config.mongodb.collection).aggregate([
+      { $match: {
+           miner: miner.address,
+           algorithm: 'pos',
+           reward: { $gt: 0 }
+        }
+      },
+      { $group: {
+          _id: 1,
+          balance: {
+             $sum: "$reward"
+          }
+        }
+      }
+    ]).toArray()
+
+    let miner_balance_res = await blockChainDB.collection(config.mongodb.collection).aggregate([
+      { $match: {
+           resolver: miner.address,
+           miner: { $ne: miner.address },
+           algorithm: 'pos',
+           reward: { $gt: 0 }
+        }
+      },
+      { $group: {
+          _id: 1,
+          balance: {
+             $sum: "$reward"
+          }
+        }
+      }
+    ]).toArray()
+
+    let trx_to_balance = await blockChainDB.collection(config.mongodb.mtrx_collection).aggregate([
+      { $match: {
+           address: miner.address,
+           type: 0,
+           amount: { $gt: 0 }
+        }
+      },
+      { $group: {
+          _id: 1,
+          balance: {
+             $sum: "$amount"
+          }
+        }
+      }
+    ]).toArray()
+
+    let trx_from_balance = await blockChainDB.collection(config.mongodb.mtrx_collection).aggregate([
+      { $match: {
+           address: miner.address,
+           amount: { $gt: 0 },
+           type: 1
+        }
+      },
+      { $group: {
+          _id: 1,
+          balance: {
+             $sum: "$amount"
+          }
+        }
+      }
+    ]).toArray()
+
+    if (miner_balance_res.length == 1) {
+      miner.miner_balance_res = miner_balance_res[0].balance / 10000
+    }
+    if (miner_balance.length == 1) {
+      miner.miner_balance = miner_balance[0].balance
+      if (miner_balance_pos.length == 1) {
+          miner.miner_balance_pos = miner_balance_pos[0].balance
+      }
+      miner.miner_balance_pow = (miner.miner_balance - miner.miner_balance_pos) / 10000
+      miner.miner_balance_pos = miner.miner_balance_pos / 10000
+    }
+    if (trx_to_balance.length == 1) {
+      miner.trx_to_balance = trx_to_balance[0].balance
+    }
+    if (trx_from_balance.length == 1) {
+      miner.trx_from_balance = trx_from_balance[0].balance
+    }
+    miner.balance = (miner.miner_balance - miner.trx_to_balance + miner.trx_from_balance) /10000
+    miner.miner_balance = miner.miner_balance / 10000
+    miner.trx_to_balance = miner.trx_to_balance / 10000
+    miner.trx_from_balance = miner.trx_from_balance / 10000
+
+    let last_block = await blockChainDB.collection(config.mongodb.collection).find({}).sort( { number: -1 }).limit(1).toArray()
+    miner.last_block= last_block[0].number
+    let totalSupply = blockchainUtils.getTotalSupply(miner.last_block)
+    miner.total_supply_ratio = (miner.balance / totalSupply * 100).toFixed(BALANCE_RATIO_DECIMALS)
+
+    miner.blocks = await blockChainDB.collection(config.mongodb.collection).find({miner: miner.address}).sort( { number: -1 }).limit(MAX_BLOCKS).toArray()
+    let max_transactions = await blockChainDB.collection(config.mongodb.trx_collection).find({addresses: {$all: [miner.address]}}).sort( { block_number: -1 }).limit(100).toArray()
+    miner.transactions = []
+    let pooled_transactions = 0
+    for (let i=0; i<max_transactions.length; i++) {
+      let trx = max_transactions[i]
+      if (trx.addresses.length > 10) {
+        pooled_transactions += 1
+      }
+      if (pooled_transactions <= MAX_POOLED_TRXS) {
+        miner.transactions.push(trx)
+      } else {
+        break
+      }
+    }
+    miner.blocks_number = await blockChainDB.collection(config.mongodb.collection).find({miner: miner.address}).count()
+    miner.transactions_number = await blockChainDB.collection(config.mongodb.trx_collection).find({addresses: {$all: [miner.address]}}).count()
+    mongoDB.close()
+  } catch (ex) {
+    console.log(ex)
+  }
+  res.json(miner)
+  return
+}
+
+exports.read_an_address = function (req, res) {
+  res.header("Cache-Control", "public, max-age=40")
   res.header("Access-Control-Allow-Origin", "*");
+
+  var miner_address = req.params.address
+  var show_all_transactions = false
+  if (req.query.show_all_transactions) {
+    if (req.query.show_all_transactions == 'true' || req.query.show_all_transactions === true) {
+      show_all_transactions = true
+      console.log('Showing all trxs for address:' + miner_address)
+    }
+  }
+  var miner = getEmptyAddress(miner_address)
 
   if (miner_address.length != 40) {
     console.log("Address " + miner_address + " is not 40 char long")
@@ -163,10 +385,10 @@ exports.read_an_address = function (req, res) {
       miner_received.minedBlocks.forEach(function(block) {
         var block_parsed = block
         block_parsed.block_id = block_parsed.blockId
+        block_parsed.number = block_parsed.blockId
         block_parsed.id = block_parsed.blockId
-        var date = new Date((block_parsed.timestamp + 1524742312) * 1000)
-        block_parsed.timestamp = date.toUTCString()
-        block_parsed.trxs = block_parsed.transactions
+        block_parsed.timestamp = block_parsed.timestamp + 1524742312
+        block_parsed.trxs_number = block_parsed.transactions.length
 
         blocks_parsed.push(block_parsed)
       })
@@ -181,10 +403,10 @@ exports.read_an_address = function (req, res) {
       miner.pooled_trxs = 0
       miner_received.transactions.forEach(function(transaction) {
         var transaction_parsed = transaction
-        transaction_parsed.block_id = transaction.blockId
+        transaction_parsed.block_number = transaction.blockId
         transaction_parsed.id = transaction.blockId
         var date = new Date((transaction.timestamp + 1524742312) * 1000)
-        transaction_parsed.timestamp = date.toUTCString()
+        transaction_parsed.timestamp = date.getTime() / 1000
         transaction_parsed.fee = 0
         var to_amount = 0
 
@@ -215,9 +437,8 @@ exports.read_an_address = function (req, res) {
         })
 
         transaction_parsed.fee = transaction_parsed.from.amount - to_amount
-        transaction_parsed.fee = transaction_parsed.fee / AMOUNT_DIVIDER
-        transaction_parsed.from.amount = transaction_parsed.from.amount / AMOUNT_DIVIDER
-
+        transaction_parsed.from.addresses = transaction_parsed.transaction.from.addresses
+        transaction_parsed.to.addresses = transaction_parsed.transaction.to.addresses
         transactions_parsed.push(transaction_parsed)
       })
       miner.transactions = transactions_parsed
@@ -389,8 +610,6 @@ exports.get_pending_trx = async function (req, res) {
         })
 
         transaction_parsed.fee = transaction_parsed.from.amount - to_amount
-        transaction_parsed.fee = transaction_parsed.fee / AMOUNT_DIVIDER
-        transaction_parsed.from.amount = transaction_parsed.from.amount / AMOUNT_DIVIDER
 
         transactions.push(transaction_parsed)
     } catch (ex) {
