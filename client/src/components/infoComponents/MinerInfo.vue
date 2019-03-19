@@ -1,9 +1,6 @@
 <template>
   <div >
-
     <div v-if="miner" class="minerTable">
-
-      <h2>Address Details</h2>
 
       <div>
         <span>
@@ -28,7 +25,7 @@
             Balance
           </span>
         <span>
-            {{ this.formatMoneyNumber(miner.balance*10000,4) }} <span title='Percentage of the Total Supply'>[{{ this.miner.total_supply_ratio }}%] </span>
+            {{ this.formatMoneyNumber(miner.balance*10000,4) }} <span title='Percentage of the Total Supply'>[{{ this.formatSupplyRatio(this.miner.total_supply_ratio) }}%] </span>
             <a title="Star network" class="webdAddress" :href="'#/stars/' + miner.address">&#9734;</a>
             <span v-clipboard:success="onCopy" v-clipboard:copy="miner.address" title="Copy address to clipboard" style="cursor: pointer; color: #fec02c!important; padding: 0px;"> &Xi; </span> <span style="font-size: xx-small; color: #fec02c!important;" :class="copyTextClass"> {{copyText }}</span>
           </span>
@@ -38,30 +35,27 @@
           <span>
             Mined amount
           </span>
-        <span v-if="miner.blocks && miner.blocks.length">
+        <span v-if="miner.miner_balance">
           {{ this.formatMoneyNumber(miner.miner_balance*10000,4) }}
         </span>
-        <span v-else> 0 </span>
       </div>
 
       <div v-if="miner.miner_balance_pow && miner.miner_balance != miner.miner_balance_pow">
           <span>
             PoW mined amount
           </span>
-        <span v-if="miner.blocks && miner.blocks.length">
+        <span>
           {{ this.formatMoneyNumber(miner.miner_balance_pow*10000,4) }}
         </span>
-        <span v-else> 0 </span>
       </div>
 
       <div v-if="miner.miner_balance_pos">
           <span>
             PoS mined amount
           </span>
-        <span v-if="miner.blocks && miner.blocks.length">
+        <span>
           {{ this.formatMoneyNumber(miner.miner_balance_pos*10000,4) }}
         </span>
-        <span v-else> 0 </span>
       </div>
 
       <div v-if="miner.miner_balance_res">
@@ -73,7 +67,7 @@
         </span>
       </div>
 
-      <div v-if="miner.balance">
+      <div v-if="miner.balance && miner.balance > 0">
           <span class="tooltip">
             PoS estimate
             <span class="tooltiptext">The estimated amount of WEBD that you earn if you stake the current balance for a month</span>
@@ -101,7 +95,6 @@
             {{ this.formatMoneyNumber(miner.trx_from_balance*10000,4) }}
           </span>
       </div>
-
     </div>
 
     <div v-else>
@@ -115,54 +108,56 @@
 <script>
 
 import Utils from '@/services/utils'
-import BlocksService from '@/services/BlocksService'
 
 export default {
   name: 'block',
 
   data () {
     return {
-      copyText: "Address copied",
-      copyTextClass: "showNoCopyMessage"
+      copyText: 'Address copied',
+      copyTextClass: 'showNoCopyMessage'
     }
   },
 
-  props:{
-    miner: { default:()=>{return [] }}
+  props: {
+    miner: { default: () => { return [] } }
   },
 
   methods: {
-    getLabel(address) {
+    getLabel (address) {
       let label = Utils.mapAddress(address)
-      if (label != address) {
+      if (label !== address) {
         return label
       }
-      return
     },
-    formatMoneyNumber(number, decimals) {
-      if (number < 0 || !number) {
+    formatMoneyNumber (number, decimals) {
+      if (!number) {
         return 0
       }
-      return Utils.formatMoneyNumber(number, decimals);
+      return Utils.formatMoneyNumber(number, decimals)
     },
-    onCopy() {
-      console.log("Address copied")
-      this.copyTextClass = "showCopyMessage"
-      setTimeout(function() {
-        this.copyTextClass = "showNoCopyMessage"
+    formatSupplyRatio (ratio) {
+      if (ratio < 0) {
+        return 0
+      }
+      return ratio
+    },
+    onCopy () {
+      this.copyTextClass = 'showCopyMessage'
+      setTimeout(function () {
+        this.copyTextClass = 'showNoCopyMessage'
       }.bind(this), 2000)
     },
-    getPossiblePoSReward(balance) {
-        let totalDailyReward = 6000 * 60 * 60 * 24 / 40
-        let daysPassed = (new Date() - new Date(1524743407 * 1000)) / (1000 * 60 * 60 * 24)
-        let currSupply = (totalDailyReward * Math.round(daysPassed) + 4156801128)
-        let posReward = 0.6666
-        let share = posReward * totalDailyReward / currSupply
-        let dailyReward = share * balance / 10000
-        let monthlyReward = dailyReward * 30 * 97 / 100
-        // PoS reward decreases 3% per month and 9% per year
-        let yearlyReward = monthlyReward * 12
-        return this.formatMoneyNumber(monthlyReward * 10000)
+    getPossiblePoSReward (balance) {
+      let totalDailyReward = 6000 * 60 * 60 * 24 / 40
+      let daysPassed = (new Date() - new Date(1524743407 * 1000)) / (1000 * 60 * 60 * 24)
+      let currSupply = (totalDailyReward * Math.round(daysPassed) + 4156801128)
+      let posReward = 0.6666
+      let share = posReward * totalDailyReward / currSupply
+      let dailyReward = share * balance / 10000
+      let monthlyReward = dailyReward * 30 * 97 / 100
+      // PoS reward decreases 3% per month and 9% per year
+      return this.formatMoneyNumber(monthlyReward * 10000)
     }
   }
 

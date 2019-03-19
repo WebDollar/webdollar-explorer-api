@@ -6,8 +6,8 @@
 
       <tr>
         <td>Block</td>
-        <td v-if="showMiner"> Miner </td>
-        <td v-if="!showMiner"> Algorithm </td>
+        <td v-if="showMiner">Miner</td>
+        <td v-if="showResolver">Resolver</td>
         <td> Age </td>
         <td>Txs</td>
       </tr>
@@ -24,12 +24,14 @@
           </a>
         </td>
 
-        <td v-if="!showMiner" align="center">
-          {{ block.algorithm }}
+        <td v-if="showResolver" align="center">
+          <a :href="'#/miner/' + (block.resolver || block.miner)">
+            {{ mapAddress(block.resolver || block.miner) }}
+          </a>
         </td>
 
         <td align="center">
-          {{ formatDate(block.timestamp, showMiner) }}
+          {{ formatDate(block.timestamp) }}
         </td>
 
         <td align="left">
@@ -42,7 +44,6 @@
         </td>
 
       </tr>
-
     </table>
 
   </div>
@@ -52,36 +53,38 @@
 <script>
 
 import Utils from '@/services/utils'
-import BlocksService from '@/services/BlocksService'
 
-var moment = require('moment');
+var moment = require('moment')
 
 export default {
 
   name: 'transactions',
-
-  props:{
-    blocks:{ default:()=>{return [] }},
-    showMiner: { default: true }
+  props: {
+    blocks: { default: () => { return [] } },
+    showMiner: { default: true },
+    showResolver: { default: false },
+    showAlgorithm: { default: false }
   },
 
   methods: {
-    mapAddress(address) {
-      return Utils.mapAddress(address)
-    },
-    formatMoneyNumber(number, decimals){
-      return Utils.formatMoneyNumber(number, decimals);
-    },
-    formatDate(timestamp, showMiner){
-      let blockDate = new Date(timestamp * 1000)
-      let fromNow = moment(blockDate).fromNow()
-      if (showMiner) {
-        return fromNow
-      } else {
-        return fromNow + " (" + blockDate.toGMTString() +  ")"
+    mapAddress (address) {
+      address = Utils.mapAddress(address)
+      if (address.length > 15) {
+        return (address).substring(0, 10) + '..' + address.substring(address.length - 5)
       }
+      return address
+    },
+    formatMoneyNumber (number, decimals) {
+      return Utils.formatMoneyNumber(number, decimals)
+    },
+    formatDate (timestamp) {
+      let blockDate = new Date(timestamp * 1000)
+      return moment(blockDate).fromNow()
     }
   }
 
 }
 </script>
+<style>
+
+</style>

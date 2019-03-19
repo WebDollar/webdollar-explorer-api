@@ -59,43 +59,49 @@ function sleep (ms) {
 export default {
   name: 'genesis',
 
-  components:{ },
+  components: { },
 
   data () {
     return {
       genesis_addresses: [],
       total_genesis: 0,
       tracked_genesis: 0,
-      former_genesis_addresses: SpecialAddresses.genesis_addresses
+      destroyed: false
     }
+  },
+  destroyed () {
+    this.destroyed = true
   },
   mounted () {
     this.getGenesis()
   },
   methods: {
-    formatMoneyNumber(number, decimals){
-      return Utils.formatMoneyNumber(number * 10000, decimals);
+    formatMoneyNumber (number, decimals) {
+      return Utils.formatMoneyNumber(number * 10000, decimals)
     },
-    genesisChange(former, current){
+    genesisChange (former, current) {
       if (current < former) {
-        return "genesisChanged"
+        return 'genesisChanged'
       }
-      return "genesisUnchanged"
+      return 'genesisUnchanged'
     },
-    async getGenesis() {
-      for (let i=0; i<this.former_genesis_addresses.length; i++) {
+    async getGenesis () {
+      for (let i = 0; i < SpecialAddresses.genesis_addresses.length; i++) {
         await sleep(300)
-        let genesis_address = this.former_genesis_addresses[i]
-        let miner_data = await BlocksService.fetchMiner(genesis_address.address)
-        let miner = miner_data.data
+        if (this.destroyed) {
+          break
+        }
+        let genesisAddress = SpecialAddresses.genesis_addresses[i]
+        let minerData = await BlocksService.fetchMiner(genesisAddress.address)
+        let miner = minerData.data
         if (miner && miner.address && miner.blocks) {
           this.tracked_genesis += miner.balance
-          this.total_genesis += genesis_address.initial_amount
+          this.total_genesis += genesisAddress.initial_amount
           this.genesis_addresses.push({
-            initial_amount: genesis_address.initial_amount,
-            miner_address: genesis_address.address,
+            initial_amount: genesisAddress.initial_amount,
+            miner_address: genesisAddress.address,
             current_amount: miner.balance,
-            owner: genesis_address.owner
+            owner: genesisAddress.owner
           })
         }
       }

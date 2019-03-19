@@ -5,7 +5,6 @@
     <table v-if="transactions && transactions.length">
 
     <tr>
-      <td>No.</td>
       <td>Block</td>
       <td>From</td>
       <td>To</td>
@@ -14,11 +13,7 @@
       <td>Age</td>
     </tr>
 
-    <tr v-bind:key="trx.block_id" v-for="(trx,index) in transactions" :class=" isReceivingMoney(address,trx.from.address,trx.to.address)">
-
-      <td align="left">
-       {{ transactions.length - index}}
-      </td>
+    <tr v-bind:key="trx.block_id" v-for="(trx) in transactions" :class=" isReceivingMoney(address,trx.from.address,trx.to.address)">
 
       <td align="left">
        <router-link replace v-bind:to="{ name: 'Block', params: { block_id: trx.block_number }}">{{ trx.block_number}}</router-link>
@@ -65,7 +60,7 @@
       </td>
 
       <td align="left">
-       {{ formatDate(trx.timestamp) }}
+       {{ formatDate(trx.timestamp) }} <br/> <span style="font-size: 0.8em"> {{ formatDateGMT(trx.timestamp) }} </span>
       </td>
     </tr>
 
@@ -78,47 +73,52 @@
 <script>
 
 import Utils from '@/services/utils'
-import BlocksService from '@/services/BlocksService'
 let moment = require('moment')
 
 export default {
 
   name: 'transactions',
 
-  props:{
-    transactions:{ default:()=>{return [] }},
-    address: { default:()=>{return [] }}
+  props: {
+    transactions: { default: () => { return [] } },
+    address: { default: () => { return [] } }
   },
 
   methods: {
 
-    mapAddress(address) {
+    mapAddress (address) {
       address = Utils.mapAddress(address)
       if (address.length > 15) {
-       return (address).substring(0,10) + ".." + address.substring(address.length - 5)
+        return (address).substring(0, 10) + '..' + address.substring(address.length - 5)
       }
       return address
     },
 
-    formatMoneyNumber(number, decimals){
-      return Utils.formatMoneyNumber(number, decimals);
+    formatMoneyNumber (number, decimals) {
+      return Utils.formatMoneyNumber(number, decimals)
     },
 
-    isReceivingMoney(mainAddress,compareAddressFrom,compareAddressTo){
+    isReceivingMoney (mainAddress, compareAddressFrom, compareAddressTo) {
       if (mainAddress && compareAddressFrom && compareAddressTo) {
-        if (compareAddressFrom.includes(mainAddress)) return 'toColor';
-        if (compareAddressTo.includes(mainAddress)) return 'fromColor';
+        if (compareAddressFrom.includes(mainAddress)) return 'toColor'
+        if (compareAddressTo.includes(mainAddress)) return 'fromColor'
       }
-      return '';
-
+      return ''
     },
-    formatDate(timestamp) {
+    formatDate (timestamp) {
       if (timestamp) {
         timestamp = new Date(timestamp * 1000)
         let fromNow = moment(timestamp).fromNow()
-        return fromNow.replace(" ago", "")
+        return fromNow.replace(' ago', '')
       } else {
         return 'not mined yet'
+      }
+    },
+    formatDateGMT (timestamp) {
+      if (timestamp) {
+        return moment(timestamp * 1000).format('DD.MM.YYYY HH:mm')
+      } else {
+        return ''
       }
     }
 

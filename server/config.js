@@ -6,7 +6,7 @@ config.couchdb = {};
 config.couchdb.syncer = {};
 config.mongodb = {};
 
-config.server.port = 3000
+config.server.port = process.env.SERVER_PORT || 3000
 
 config.webdollar.pouchdb_sync_url = "http://localhost:3333"
 config.webdollar.couchdb_sync_url = "http://localhost:3333"
@@ -21,6 +21,7 @@ config.enable_mongodb = true
 config.mongodb.url = "mongodb://localhost:27017"
 config.mongodb.db = "blockchainDB3"
 config.mongodb.collection = "blocks"
+config.mongodb.uncle_collection = "uncles"
 config.mongodb.trx_collection = "transactions"
 config.mongodb.mtrx_collection = "mtransactions"
 
